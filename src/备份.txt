@@ -1,0 +1,163 @@
+package
+{
+	import flash.display.*;
+	import flash.events.*;
+	import flash.net.*;
+	import flash.text.*;
+	
+	import view.DragFileAlert;
+	import flash.desktop.*;
+	import flash.filesystem.*;
+	import flash.system.*;
+	import flash.text.*;
+	import flash.utils.*;
+	
+	public class CompressionTools extends EventDispatcher
+	{
+		public function CompressionTools(){}
+		private static var _instance:CompressionTools
+		public static function get instance():CompressionTools {
+			if (!_instance)_instance = new CompressionTools()
+			return _instance
+		}
+		
+		private var _root:MovieClip
+		public var dragFileAlert:DragFileAlert;
+		private var nativeProcessStartupInfo:NativeProcessStartupInfo;
+		private var ntvPrc:NativeProcess;
+		public function get root():MovieClip{return _root;}
+		public function set root(value:MovieClip):void{_root = value;}
+		
+		
+		public function compressionJSArr(arr:Array,parentFile:File,sinaglefileBool:Boolean):void
+		{
+			
+		}
+		
+		public function compressionCSSArr(arr:Array,parentFile:File,sinaglefileBool:Boolean):void
+		{
+			
+		}
+		
+		public function compressionHTMLArr(arr:Array,parentFile:File,sinaglefileBool:Boolean):void
+		{
+			
+		}
+		
+		public function compressionAllArr(arr:Array, parentFile:File, sinaglefileBool:Boolean):void
+		{
+			
+		}
+		/**
+		 * 初始化进程
+		 */
+		public function initNativeProcess(com:String,port:String):Boolean 
+		{
+			//判断操作系统 与进程文件
+			var comFile:File;  
+			/*
+			if (Capabilities.os.toLowerCase().indexOf("win") >= 0){
+				//jvmFile = javaHomeDir.resolvePath("CubeConnector.exe");
+				comFile=File.applicationDirectory.resolvePath('CubeConnector.exe')
+				DebugOutput.add('Windows 系统')
+			}else{
+				//mac或其它os
+				//jvmFile = javaHomeDir.resolvePath("bin/java");
+				DebugOutput.add('MAC 系统')
+			}
+			*/
+			comFile=File.applicationDirectory.resolvePath('tools/compiler.jar')
+			
+			if (!comFile|| !comFile.exists) {
+				DebugOutput.add('Com 控制进程程序不存在')
+				return false;
+			}
+			
+			if (!NativeProcess.isSupported) {
+				DebugOutput.add('Air 不支持进程调用');
+				return false;
+			}
+			
+			try{
+				//设置启动进程
+				nativeProcessStartupInfo = new NativeProcessStartupInfo();
+				nativeProcessStartupInfo.executable = comFile;
+				nativeProcessStartupInfo.workingDirectory = File.applicationDirectory;
+				//启动参数设置
+				var prcArgs:Vector.<String> = new Vector.<String>();
+				DebugOutput.add(com, port);
+				prcArgs[0] = com
+				prcArgs[1] = port
+				nativeProcessStartupInfo.arguments = prcArgs;
+				if (ntvPrc) {
+					if(ntvPrc&&ntvPrc.running)ntvPrc.exit(true);
+				}
+				//开始准备启动进程
+				ntvPrc = new NativeProcess();
+				ntvPrc.addEventListener(ProgressEvent.STANDARD_OUTPUT_DATA, outputHandler);
+				ntvPrc.addEventListener(ProgressEvent.STANDARD_ERROR_DATA, errorOutputHandler);
+				ntvPrc.addEventListener(IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
+				ntvPrc.addEventListener(IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
+				ntvPrc.addEventListener(NativeProcessExitEvent.EXIT, exitHandler);
+				//启动进程
+				ntvPrc.start(nativeProcessStartupInfo)
+				
+			}
+			catch (e:Error)
+			{
+				DebugOutput.add(e.message, "错误");
+				return false;
+			}
+			return true;
+		}
+		/**
+		 * 进程推出
+		 * @param	e
+		 */
+		private function exitHandler(e:NativeProcessExitEvent):void 
+		{
+			DebugOutput.add('exitHandler',ntvPrc.running)
+		}
+		/**
+		 * 进程出错
+		 * @param	e
+		 */
+		private function onIOError(e:IOErrorEvent):void 
+		{
+			DebugOutput.add('onIOError');
+		}
+		/**
+		 * 进程返回数据
+		 * @param	event
+		 */
+		private function outputHandler(event:ProgressEvent):void
+		{
+			var ntvPrc:NativeProcess = event.target as NativeProcess;
+			var outStd:String = ntvPrc.standardOutput.readUTFBytes(ntvPrc.standardOutput.bytesAvailable);
+			DebugOutput.add('outputHandler:',outStd)
+		}
+		/**
+		 * 进程错误返回
+		 * @param	event
+		 */
+		private function errorOutputHandler(event:ProgressEvent):void
+		{
+			var ntvPrc:NativeProcess = event.target as NativeProcess;
+			//var outErr:String = ntvPrc.standardError.readUTFBytes(ntvPrc.standardError.bytesAvailable);
+			DebugOutput.add('errorOutputHandler')
+		}
+		/**
+		 * 进程
+		 */
+		public function get process():NativeProcess {
+			return ntvPrc;
+		}
+		/**
+		 * 是否运行中
+		 */
+		public function get processing():Boolean {
+			if (ntvPrc && ntvPrc.running) return true
+			else return false;
+		}
+	}
+}
